@@ -88,12 +88,8 @@ def demo_three_mapping_approaches():
             title_field='headline',
             content_fields=['body', 'summary'],
             id_field='permalink',
-            author_field='writer',
             category_field='tags',
             publish_time_field='published_at',
-            images_field='photos',
-            fetch_time_field='crawled_at',
-            original_id_field='source',
             content_separator=' | '
         )
         
@@ -112,11 +108,11 @@ def demo_three_mapping_approaches():
             rep = clusters_full[0].representative
             print("📝 Representative item features:")
             print(f"   📰 Title: {rep.title}")
-            print(f"   👤 Author: {rep.author}")
-            print(f"   🏷️ Categories: {rep.category}")
-            print(f"   🖼️ Images: {len(rep.images)} items")
-            print(f"   📅 Published: {rep.publish_time}")
-            print(f"   🔗 Original Source: {rep.original_url}")
+            print(f"   👤 Author: {rep.get_working_field('author', 'Unknown')}")
+            print(f"   🏷️ Categories: {rep.get_working_field('category', [])}")
+            print(f"   🖼️ Images: {len(rep.get_working_field('images', []))} items")
+            print(f"   📅 Published: {rep.get_working_field('publish_time', 'Unknown')}")
+            print(f"   🔗 Original Source: {rep.get_working_field('original_url', rep.url)}")
 
         # 2. Balanced Mapping (Recommended)
         print("\n⚖️ 2. BALANCED MAPPING (Recommended - Optimal Balance)")
@@ -126,7 +122,7 @@ def demo_three_mapping_approaches():
             title_field='headline',
             content_fields=['body', 'summary'],
             id_field='permalink',
-            author_field='writer',
+            category_field='tags',
             publish_time_field='published_at',
             content_separator=' | '
         )
@@ -146,10 +142,10 @@ def demo_three_mapping_approaches():
             rep = clusters_balanced[0].representative
             print("📝 Representative item features:")
             print(f"   📰 Title: {rep.title}")
-            print(f"   👤 Author: {rep.author}")
-            print(f"   📅 Published: {rep.publish_time}")
-            print(f"   🏷️ Categories: {rep.category} (default)")
-            print(f"   🖼️ Images: {len(rep.images)} items (default)")
+            print(f"   👤 Author: {rep.get_working_field('author', 'Unknown')}")
+            print(f"   📅 Published: {rep.get_working_field('publish_time', 'Unknown')}")
+            print(f"   🏷️ Categories: {rep.get_working_field('category', [])} (default)")
+            print(f"   🖼️ Images: {len(rep.get_working_field('images', []))} items (default)")
 
         # 3. Minimal Mapping (Performance)
         print("\n🎯 3. MINIMAL MAPPING (Performance - Core Fields Only)")
@@ -177,10 +173,10 @@ def demo_three_mapping_approaches():
             rep = clusters_minimal[0].representative
             print("📝 Representative item features:")
             print(f"   📰 Title: {rep.title}")
-            print(f"   👤 Author: {rep.author} (default)")
-            print(f"   📅 Published: {rep.publish_time} (default)")
-            print(f"   🏷️ Categories: {rep.category} (default)")
-            print(f"   🖼️ Images: {len(rep.images)} items (default)")
+            print(f"   👤 Author: {rep.get_working_field('author', 'Unknown')} (default)")
+            print(f"   📅 Published: {rep.get_working_field('publish_time', 'Unknown')} (default)")
+            print(f"   🏷️ Categories: {rep.get_working_field('category', [])} (default)")
+            print(f"   🖼️ Images: {len(rep.get_working_field('images', []))} items (default)")
 
         # Performance and Accuracy Comparison
         print("\n📈 PERFORMANCE & ACCURACY COMPARISON")

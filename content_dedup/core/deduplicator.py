@@ -8,7 +8,7 @@ import logging
 from typing import List, Dict, Any, Union, Optional
 from pathlib import Path
 
-from .models import ContentItem, ContentCluster
+from .models_flexible import FlexibleContentItem, FlexibleContentCluster, create_flexible_content_item
 from .clustering import ClusteringEngine
 from ..processors.language import LanguageProcessor
 from ..utils.validators import validate_input_file
@@ -57,8 +57,8 @@ class ContentDeduplicator:
             # Accept any mapping object
             self.field_mapping = field_mapping
         
-        self.content_items: List[ContentItem] = []
-        self.clusters: List[ContentCluster] = []
+        self.content_items: List[FlexibleContentItem] = []
+        self.clusters: List[FlexibleContentCluster] = []
         
         # Initialize components
         self.lang_processor = LanguageProcessor()
@@ -93,8 +93,12 @@ class ContentDeduplicator:
                 
                 try:
                     data = json.loads(line)
-                    # Use field mapping to create ContentItem
-                    item = ContentItem.from_raw_dict(data, self.field_mapping)
+                    # Use field mapping to create FlexibleContentItem
+                    item = FlexibleContentItem.from_raw_data(
+                        original_data=data, 
+                        field_mapping=self.field_mapping,
+                        required_fields=['title', 'content_text', 'url']
+                    )
                     
                     # Auto-detect language if needed
                     if self.language == 'auto':
@@ -123,7 +127,7 @@ class ContentDeduplicator:
             lang = item.language or 'unknown'
             self.language_stats[lang] = self.language_stats.get(lang, 0) + 1
     
-    def exact_duplicate_check(self) -> List[ContentItem]:
+    def exact_duplicate_check(self) -> List[FlexibleContentItem]:
         """
         Remove exact duplicates based on URL and title hash
         
@@ -136,7 +140,7 @@ class ContentDeduplicator:
         
         for item in self.content_items:
             # URL deduplication
-            if item.url in seen_urls or item.original_url in seen_urls:
+            if item.url in seen_urls:
                 continue
             
             # Title hash deduplication
@@ -145,14 +149,15 @@ class ContentDeduplicator:
                 continue
             
             seen_urls.add(item.url)
-            seen_urls.add(item.original_url)
+            original_url = item.get_working_field('original_url', item.url)
+            seen_urls.add(original_url)
             seen_title_hashes.add(title_hash)
             unique_items.append(item)
         
         self.logger.info(f"Exact duplicate check: {len(self.content_items)} -> {len(unique_items)}")
         return unique_items
     
-    def cluster_and_deduplicate(self) -> List[ContentCluster]:
+    def cluster_and_deduplicate(self) -> List[FlexibleContentCluster]:
         """
         Perform clustering and deduplication
         
@@ -182,7 +187,7 @@ class ContentDeduplicator:
             language_distribution = self._get_cluster_language_distribution(cluster_items)
             
             # Create cluster
-            cluster = ContentCluster(
+            cluster = FlexibleContentCluster(
                 representative=representative,
                 members=cluster_items,
                 cluster_id=f"cluster_{i:04d}",
@@ -203,7 +208,7 @@ class ContentDeduplicator:
         
         return clusters
     
-    def _get_cluster_dominant_language(self, cluster_items: List[ContentItem]) -> str:
+    def _get_cluster_dominant_language(self, cluster_items: List[FlexibleContentItem]) -> str:
         """Get dominant language of cluster"""
         lang_count = {}
         for item in cluster_items:
@@ -215,7 +220,7 @@ class ContentDeduplicator:
         
         return max(lang_count.items(), key=lambda x: x[1])[0]
     
-    def _get_cluster_language_distribution(self, cluster_items: List[ContentItem]) -> Dict[str, float]:
+    def _get_cluster_language_distribution(self, cluster_items: List[FlexibleContentItem]) -> Dict[str, float]:
         """Get language distribution of cluster"""
         lang_count = {}
         total = len(cluster_items)
@@ -226,11 +231,11 @@ class ContentDeduplicator:
         
         return {lang: count / total for lang, count in lang_count.items()}
     
-    def get_representatives(self) -> List[ContentItem]:
+    def get_representatives(self) -> List[FlexibleContentItem]:
         """Get all cluster representatives"""
         return [cluster.representative for cluster in self.clusters]
     
-    def get_all_clusters(self) -> List[ContentCluster]:
+    def get_all_clusters(self) -> List[FlexibleContentCluster]:
         """Get all content clusters"""
         return self.clusters
     
@@ -262,7 +267,7 @@ class ContentDeduplicator:
                 'similarity_threshold': self.similarity_threshold,
                 'compression_ratio': len(self.clusters) / len(self.content_items) if self.content_items else 0
             },
-            'clusters': [cluster.to_dict() for cluster in self.clusters]
+            'clusters': [cluster.to_dict(output_mode="compatible") for cluster in self.clusters]
         }
         
         with open(output_path, 'w', encoding='utf-8') as f:
@@ -272,7 +277,7 @@ class ContentDeduplicator:
     
     def _save_representatives(self, output_path: str) -> None:
         """Save representative items only"""
-        representatives = [cluster.representative.to_dict() for cluster in self.clusters]
+        representatives = [cluster.representative.to_dict(mode="compatible") for cluster in self.clusters]
         
         with open(output_path, 'w', encoding='utf-8') as f:
             for item in representatives:

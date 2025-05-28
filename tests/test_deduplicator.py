@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 from content_dedup.core.deduplicator import ContentDeduplicator
-from content_dedup.core.models import ContentItem, ContentCluster
+from content_dedup.core.models_flexible import FlexibleContentItem, FlexibleContentCluster
 
 
 class TestContentDeduplicator:
@@ -42,7 +42,7 @@ class TestContentDeduplicator:
         deduplicator.load_jsonl(sample_jsonl_file)
         
         assert len(deduplicator.content_items) == 4
-        assert all(isinstance(item, ContentItem) for item in deduplicator.content_items)
+        assert all(isinstance(item, FlexibleContentItem) for item in deduplicator.content_items)
         assert deduplicator.language_stats  # Should have language statistics
         
         # Clean up
@@ -64,16 +64,24 @@ class TestContentDeduplicator:
         deduplicator = ContentDeduplicator()
         
         # Add duplicate items
-        duplicate_item = ContentItem(
-            title="AI技術突破：新演算法提升效率",  # Same title as first item
-            content_text="Different content",
-            url="https://example.com/ai-breakthrough",  # Same URL as first item
-            original_url="https://example.com/ai-breakthrough",
-            category=["科技"],
-            publish_time="2025/01/15 10:00:00",
-            author="Different Author",
-            images=[],
-            fetch_time="2025/01/15 11:00:00"
+        from content_dedup.config.field_mapping import get_field_mapping
+        field_mapping = get_field_mapping('news')
+        
+        duplicate_data = {
+            "title": "AI技術突破：新演算法提升效率",  # Same title as first item
+            "content": "Different content",
+            "url": "https://example.com/ai-breakthrough",  # Same URL as first item
+            "tags": ["科技"],
+            "published_at": "2025/01/15 10:00:00",
+            "author": "Different Author",
+            "images": [],
+            "fetch_time": "2025/01/15 11:00:00"
+        }
+        
+        duplicate_item = FlexibleContentItem.from_raw_data(
+            original_data=duplicate_data,
+            field_mapping=field_mapping,
+            required_fields=['title', 'content_text', 'url']
         )
         
         deduplicator.content_items = sample_content_items + [duplicate_item]
@@ -90,7 +98,7 @@ class TestContentDeduplicator:
         clusters = deduplicator.cluster_and_deduplicate()
         
         assert len(clusters) > 0
-        assert all(isinstance(cluster, ContentCluster) for cluster in clusters)
+        assert all(isinstance(cluster, FlexibleContentCluster) for cluster in clusters)
         assert all(cluster.representative is not None for cluster in clusters)
         assert all(len(cluster.members) > 0 for cluster in clusters)
         
@@ -110,7 +118,7 @@ class TestContentDeduplicator:
         representatives = deduplicator.get_representatives()
         
         assert len(representatives) == len(deduplicator.clusters)
-        assert all(isinstance(rep, ContentItem) for rep in representatives)
+        assert all(isinstance(rep, FlexibleContentItem) for rep in representatives)
         
         # Clean up
         Path(sample_jsonl_file).unlink()

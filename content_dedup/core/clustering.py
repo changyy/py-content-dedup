@@ -8,7 +8,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from difflib import SequenceMatcher
 
-from .models import ContentItem, ContentCluster
+from .models_flexible import FlexibleContentItem, FlexibleContentCluster
 from ..processors.language import LanguageProcessor
 
 
@@ -21,7 +21,7 @@ class ClusteringEngine:
         self.similarity_threshold = similarity_threshold
         self.lang_processor = language_processor or LanguageProcessor()
     
-    def calculate_similarity_matrix(self, items: List[ContentItem]) -> np.ndarray:
+    def calculate_similarity_matrix(self, items: List[FlexibleContentItem]) -> np.ndarray:
         """
         Calculate similarity matrix for content items
         
@@ -69,7 +69,7 @@ class ClusteringEngine:
         
         return similarity_matrix
     
-    def _calculate_content_similarity(self, item1: ContentItem, item2: ContentItem) -> float:
+    def _calculate_content_similarity(self, item1: FlexibleContentItem, item2: FlexibleContentItem) -> float:
         """Calculate similarity between two content items"""
         # Title similarity
         title_sim = SequenceMatcher(None, item1.title, item2.title).ratio()
@@ -103,7 +103,7 @@ class ClusteringEngine:
         
         return similarity
     
-    def find_clusters(self, items: List[ContentItem]) -> List[List[int]]:
+    def find_clusters(self, items: List[FlexibleContentItem]) -> List[List[int]]:
         """
         Find clusters using connected components algorithm
         
@@ -147,7 +147,7 @@ class ClusteringEngine:
         
         return clusters
     
-    def select_representative(self, cluster_items: List[ContentItem]) -> ContentItem:
+    def select_representative(self, cluster_items: List[FlexibleContentItem]) -> FlexibleContentItem:
         """
         Select the best representative for a cluster
         
@@ -172,7 +172,7 @@ class ClusteringEngine:
         
         return best_item
     
-    def _calculate_quality_score(self, item: ContentItem, cluster_items: List[ContentItem]) -> float:
+    def _calculate_quality_score(self, item: FlexibleContentItem, cluster_items: List[FlexibleContentItem]) -> float:
         """Calculate quality score for representative selection"""
         score = 0.0
         
@@ -193,7 +193,8 @@ class ClusteringEngine:
             score += 15
         
         # Image count score (10%)
-        score += min(len(item.images) * 5, 15)
+        images = item.get_working_field('images', [])
+        score += min(len(images) * 5, 15)
         
         # Source reliability score (20%)
         reliable_domains = [
@@ -213,22 +214,26 @@ class ClusteringEngine:
         # Freshness score (10%)
         try:
             from datetime import datetime
-            publish_time = datetime.strptime(item.publish_time, "%Y/%m/%d %H:%M:%S")
-            now = datetime.now()
-            hours_diff = (now - publish_time).total_seconds() / 3600
-            
-            if hours_diff <= 6:
-                score += 10
-            elif hours_diff <= 24:
-                score += 8
-            elif hours_diff <= 72:
-                score += 5
+            publish_time_str = item.get_working_field('publish_time', '')
+            if publish_time_str:
+                publish_time = datetime.strptime(publish_time_str, "%Y/%m/%d %H:%M:%S")
+                now = datetime.now()
+                hours_diff = (now - publish_time).total_seconds() / 3600
+                
+                if hours_diff <= 6:
+                    score += 10
+                elif hours_diff <= 24:
+                    score += 8
+                elif hours_diff <= 72:
+                    score += 5
+            else:
+                score += 5  # Default score
         except:
             score += 5  # Default score
         
         return score
     
-    def _get_cluster_dominant_language(self, cluster_items: List[ContentItem]) -> str:
+    def _get_cluster_dominant_language(self, cluster_items: List[FlexibleContentItem]) -> str:
         """Get dominant language of cluster"""
         lang_count = {}
         for item in cluster_items:
@@ -240,7 +245,7 @@ class ClusteringEngine:
         
         return max(lang_count.items(), key=lambda x: x[1])[0]
     
-    def _get_cluster_language_distribution(self, cluster_items: List[ContentItem]) -> Dict[str, float]:
+    def _get_cluster_language_distribution(self, cluster_items: List[FlexibleContentItem]) -> Dict[str, float]:
         """Get language distribution of cluster"""
         lang_count = {}
         total = len(cluster_items)

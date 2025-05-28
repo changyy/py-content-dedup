@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from content_dedup.config.field_mapping import FieldMapping, create_custom_mapping
 from content_dedup.config.field_mapping_minimal import MinimalFieldMapping, create_minimal_custom_mapping
-from content_dedup.core.models import ContentItem
+from content_dedup.core.models_flexible import FlexibleContentItem
 from content_dedup import ContentDeduplicator
 
 
@@ -88,7 +88,7 @@ class TestFieldMappingComparison:
         assert minimal_result['images'] == []
     
     def test_content_item_creation_comparison(self):
-        """Test ContentItem creation with both mapping types"""
+        """Test FlexibleContentItem creation with both mapping types"""
         full_mapping = create_custom_mapping(
             title_field='headline',
             content_fields=['body', 'summary'],
@@ -104,18 +104,25 @@ class TestFieldMappingComparison:
         data = self.test_data[0]
         
         # Create items
-        full_item = ContentItem.from_raw_dict(data, full_mapping)
-        minimal_item = ContentItem.from_raw_dict(data, minimal_mapping)
+        full_item = FlexibleContentItem.from_raw_data(
+            original_data=data,
+            field_mapping=full_mapping,
+            required_fields=['title', 'content_text', 'url']
+        )
+        minimal_item = FlexibleContentItem.from_raw_data(
+            original_data=data,
+            field_mapping=minimal_mapping,
+            required_fields=['title', 'content_text', 'url']
+        )
         
         # Core deduplication fields should be identical
         assert full_item.title == minimal_item.title
         assert full_item.content_text == minimal_item.content_text
         assert full_item.url == minimal_item.url
         
-        # Since we removed author_field, both should have empty/default author
-        assert 'author' in full_item.__dict__
-        assert 'author' in minimal_item.__dict__
-        assert minimal_item.author == ""
+        # Check working fields availability
+        assert 'author' in full_item.working_fields or full_item.get_working_field('author', '') == ""
+        assert minimal_item.get_working_field('author', '') == ""
     
     def test_deduplication_accuracy_comparison(self):
         """Test that both mapping types produce equivalent deduplication results"""

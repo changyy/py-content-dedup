@@ -122,7 +122,7 @@ def demo_mapping_comparison():
             title_field='headline',
             content_fields=['body', 'summary'],
             id_field='permalink',
-            author_field='writer',
+            category_field='tags',
             publish_time_field='published_at',
             content_separator=' | '
         )
@@ -234,10 +234,10 @@ def demo_predefined_mapping_types():
             print(f"   ID欄位: {mapping.id_field}")
             
             # 檢查是否有額外欄位
-            if hasattr(mapping, 'author_field'):
-                print(f"   作者欄位: {mapping.author_field}")
             if hasattr(mapping, 'category_field'):
                 print(f"   分類欄位: {mapping.category_field}")
+            if hasattr(mapping, 'publish_time_field'):
+                print(f"   時間欄位: {mapping.publish_time_field}")
                 
         except ValueError as e:
             print(f"   ❌ 錯誤: {e}")
@@ -276,17 +276,14 @@ def demo_performance_comparison():
                 title_field='headline',
                 content_fields=['body', 'summary'],
                 id_field='permalink',
-                author_field='writer',
                 category_field='tags',
-                publish_time_field='published_at',
-                images_field='images',
-                fetch_time_field='crawled_at'
+                publish_time_field='published_at'
             )),
             ("平衡版", create_balanced_mapping(
                 title_field='headline',
                 content_fields=['body', 'summary'],
                 id_field='permalink',
-                author_field='writer',
+                category_field='tags',
                 publish_time_field='published_at'
             )),
             ("精簡版", create_minimal_custom_mapping(

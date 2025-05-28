@@ -30,7 +30,6 @@ def example_2_custom_mapping():
         title_field='headline',  # Single field
         content_fields=['body', 'summary', 'excerpt'],  # Multiple fields combined
         id_field='permalink',
-        author_field='writer',
         category_field='tags',
         content_separator=' | ',  # Custom separator
         ignore_missing_required=True  # Don't fail on missing fields
@@ -62,11 +61,9 @@ def example_4_complex_data():
         title_field=['article_title', 'post_title', 'name'],
         content_fields=['article_body', 'content.text', 'description'],
         id_field='metadata.url',
-        author_field='author.name',
         category_field='classifications',
         default_values={
             'url': 'unknown',
-            'author': 'anonymous',
             'category': ['uncategorized']
         }
     )

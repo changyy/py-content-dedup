@@ -34,7 +34,7 @@ def demo_standard_format():
         print(f"✅ Loaded {len(deduplicator.content_items)} items using default mapping")
         
         for i, item in enumerate(deduplicator.content_items[:2]):
-            print(f"   Item {i+1}: '{item.title}' by {item.author}")
+            print(f"   Item {i+1}: '{item.title}' by {item.get_working_field('author', 'Unknown')}")
     else:
         print("❌ Standard format sample file not found")
     
@@ -94,9 +94,9 @@ def demo_custom_field_mapping():
         print(f"✅ Loaded {len(deduplicator.content_items)} items using custom news mapping")
         
         for i, item in enumerate(deduplicator.content_items):
-            print(f"   Item {i+1}: '{item.title}' by {item.author}")
+            print(f"   Item {i+1}: '{item.title}' by {item.get_working_field('author', 'Unknown')}")
             print(f"   Content: '{item.content_text[:50]}...'")
-            print(f"   Categories: {item.category}")
+            print(f"   Categories: {item.get_working_field('category', [])}")
         
         # Perform clustering
         clusters = deduplicator.cluster_and_deduplicate()
@@ -160,7 +160,7 @@ def demo_mixed_format_handling():
         print(f"✅ Loaded {len(deduplicator.content_items)} mixed format items")
         
         for i, item in enumerate(deduplicator.content_items):
-            print(f"   Item {i+1}: '{item.title}' by {item.author}")
+            print(f"   Item {i+1}: '{item.title}' by {item.get_working_field('author', 'Unknown')}")
             print(f"   URL: {item.url}")
         
     finally:
@@ -183,7 +183,7 @@ def demo_predefined_mappings():
             print(f"   Title field(s): {mapping.title_field}")
             print(f"   Content field(s): {mapping.content_fields}")
             print(f"   URL field: {mapping.id_field}")
-            print(f"   Author field: {mapping.author_field}")
+            print(f"   Category field: {mapping.category_field}")
         except Exception as e:
             print(f"❌ Error loading {mapping_name} mapping: {e}")
     

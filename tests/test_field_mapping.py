@@ -5,7 +5,7 @@ Tests for field mapping functionality
 import pytest
 import json
 from content_dedup.config.field_mapping import FieldMapping, get_field_mapping, create_custom_mapping
-from content_dedup.core.models import ContentItem
+from content_dedup.core.models_flexible import FlexibleContentItem
 
 
 class TestFieldMapping:
@@ -93,8 +93,8 @@ class TestFieldMapping:
             mapping = get_field_mapping(mapping_name)
             assert isinstance(mapping, FieldMapping)
     
-    def test_content_item_from_raw_dict(self):
-        """Test ContentItem creation from raw dictionary"""
+    def test_flexible_content_item_from_raw_data(self):
+        """Test FlexibleContentItem creation from raw data"""
         mapping = create_custom_mapping(
             title_field='headline',
             content_fields=['body', 'summary'],
@@ -108,7 +108,11 @@ class TestFieldMapping:
             'link': 'https://example.com/article'
         }
         
-        item = ContentItem.from_raw_dict(data, mapping)
+        item = FlexibleContentItem.from_raw_data(
+            original_data=data,
+            field_mapping=mapping,
+            required_fields=['title', 'content_text', 'url']
+        )
         assert item.title == 'Test Article'
         assert item.content_text == 'Article body Article summary'
         assert item.url == 'https://example.com/article'

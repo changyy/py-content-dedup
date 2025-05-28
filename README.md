@@ -99,7 +99,8 @@ from content_dedup import ContentDeduplicator
 deduplicator = ContentDeduplicator(
     language='auto',           # Auto-detect language
     similarity_threshold=0.8,  # Similarity threshold for clustering
-    mixed_language_threshold=0.3  # Mixed language detection threshold
+    mixed_language_threshold=0.3,  # Mixed language detection threshold
+    field_mapping='news'       # Use predefined field mapping
 )
 
 # Load and process data
@@ -107,7 +108,7 @@ deduplicator.load_jsonl('input.jsonl')
 clusters = deduplicator.cluster_and_deduplicate()
 
 # Get representatives only
-representatives = [cluster.representative for cluster in clusters]
+representatives = deduplicator.get_representatives()
 
 # Generate detailed report
 report = deduplicator.generate_report()
@@ -178,6 +179,7 @@ minimal_mapping = create_minimal_custom_mapping(
     id_field='permalink'
 )
 
+# Use with ContentDeduplicator
 deduplicator = ContentDeduplicator(field_mapping=balanced_mapping)  # Recommended
 ```
 
@@ -428,25 +430,49 @@ class ContentDeduplicator:
     def __init__(self, 
                  language: str = 'auto',
                  similarity_threshold: float = 0.8,
-                 mixed_language_threshold: float = 0.3)
+                 mixed_language_threshold: float = 0.3,
+                 field_mapping: Union[str, Any, None] = None)
     
     def load_jsonl(self, file_path: str) -> None
-    def cluster_and_deduplicate(self) -> List[ContentCluster]
+    def cluster_and_deduplicate(self) -> List[FlexibleContentCluster]
     def generate_report(self) -> Dict[str, Any]
     def save_results(self, output_path: str, format: str = 'clusters') -> None
+    def get_representatives(self) -> List[FlexibleContentItem]
+    def get_all_clusters(self) -> List[FlexibleContentCluster]
 ```
 
-### ContentCluster Class
+### FlexibleContentCluster Class
 
 ```python
 @dataclass
-class ContentCluster:
-    representative: ContentItem
-    members: List[ContentItem]
+class FlexibleContentCluster:
+    representative: FlexibleContentItem
+    members: List[FlexibleContentItem]
     cluster_id: str
     dominant_language: str
     language_distribution: Dict[str, float]
     similarity_scores: Dict[str, float]
+```
+
+### FlexibleContentItem Class
+
+```python
+@dataclass
+class FlexibleContentItem:
+    original_data: Dict[str, Any]
+    working_fields: Dict[str, Any]
+    language: Optional[str] = None
+    field_mapping_info: Dict[str, str] = field(default_factory=dict)
+    
+    @property
+    def title(self) -> str
+    @property
+    def content_text(self) -> str
+    @property
+    def url(self) -> str
+    
+    def get_working_field(self, field_name: str, default=None)
+    def to_dict(self, mode: str = "working", include_metadata: bool = False) -> Dict[str, Any]
 ```
 
 ## 🛠️ Development

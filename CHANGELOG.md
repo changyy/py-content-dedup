@@ -14,6 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code quality checks with pylint, black, and mypy
 - Security scanning with safety and bandit
 
+## [1.1.0] - 2025-05-28
+
+### Changed
+- **🔄 Major Architecture Migration**: Migrated from fixed ContentItem/ContentCluster model to flexible FlexibleContentItem/FlexibleContentCluster architecture
+- **📚 API Updates**: Updated all API references in documentation to use new flexible model classes
+- **🛠️ Enhanced ContentDeduplicator**: Added `field_mapping` parameter to constructor for better field mapping control
+- **📖 Documentation**: Updated README.md with correct API signatures and class names for v1.1.0
+
+### Added
+- **🎯 FlexibleContentItem**: New flexible content model supporting dynamic field mapping
+- **📊 FlexibleContentCluster**: New flexible cluster model with enhanced language distribution tracking
+- **🔧 Enhanced API Methods**: Added `get_representatives()` and `get_all_clusters()` methods to ContentDeduplicator
+- **📋 Field Mapping Integration**: Better integration of field mapping configuration in ContentDeduplicator initialization
+
+### Migration Notes
+- All 105 tests passing with new flexible architecture
+- Backward compatibility maintained through flexible field mapping system
+- Enhanced memory efficiency with working_fields vs original_data separation
+- Improved language detection and mixed-language content handling
+
 ## [1.0.0] - 2025-05-27
 
 ### Added
