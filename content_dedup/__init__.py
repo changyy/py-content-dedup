@@ -5,7 +5,7 @@ This package provides tools for deduplicating and clustering content items
 with support for multiple languages and mixed-language content.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __author__ = "changyy"
 __email__ = "changyy.csie@gmail.com"
 
