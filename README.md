@@ -1,6 +1,6 @@
 # content-dedup
 
-[![PyPI version](https://badge.fury.io/py/content-dedup.svg)](https://badge.fury.io/py/content-dedup)
+[![PyPI version](https://img.shields.io/pypi/v/content-dedup.svg)](https://pypi.org/project/content-dedup)
 [![PyPI Downloads](https://static.pepy.tech/badge/content-dedup)](https://pepy.tech/projects/content-dedup)
 
 **Intelligent content deduplication and clustering toolkit with multilingual support, designed for efficient pipeline integration and production use.**
